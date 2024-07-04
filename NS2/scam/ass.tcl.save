@@ -1,0 +1,147 @@
+set ns [new Simulator]
+set nf [open ass1.nam w]
+set f [open ass1.tr w]
+$ns namtrace-all $nf
+$ns trace-all $f
+$ns rtproto Session
+
+proc finish {} {
+
+ 	global ns f
+ 	$ns flush-trace
+	close $f
+ 	exec nam ass1.nam &
+ 	exit 0
+	}
+
+for {set i 0} {$i < 11} {incr i} {
+ set n($i) [$ns node]
+}
+
+$n(1) color red
+$n(2) color blue
+$n(3) color green
+$n(6) color green
+$n(7) color blue
+$n(10) color red
+
+$ns duplex-link $n(1) $n(2) 20Mb 10ms DropTail
+$ns duplex-link $n(3) $n(4) 20Mb 10ms DropTail
+$ns duplex-link $n(4) $n(5) 20Mb 10ms DropTail
+$ns duplex-link $n(5) $n(6) 20Mb 10ms DropTail
+$ns duplex-link $n(1) $n(4) 20Mb 10ms DropTail
+$ns duplex-link $n(2) $n(5) 20Mb 10ms DropTail
+$ns duplex-link $n(8) $n(9) 20Mb 10ms DropTail
+
+$ns simplex-link $n(3) $n(7) 10Mb 5ms SFQ
+$ns simplex-link $n(4) $n(8) 10Mb 5ms SFQ
+$ns simplex-link $n(9) $n(5) 10Mb 5ms SFQ
+$ns simplex-link $n(6) $n(10) 10Mb 5ms SFQ
+$ns simplex-link $n(7) $n(8) 10Mb 5ms SFQ
+$ns simplex-link $n(10) $n(9) 10Mb 5ms SFQ
+
+
+$ns duplex-link-op $n(1) $n(2) orient right
+$ns duplex-link-op $n(3) $n(4) orient r ight
+$ns duplex-link-op $n(5) $n(6) orient right
+$ns duplex-link-op $n(1) $n(4) orient down
+$ns duplex-link-op $n(2) $n(5) orient down
+$ns duplex-link-op $n(4) $n(5) orient right
+$ns duplex-link-op $n(8) $n(9) orient right
+$ns simplex-link-op $n(3) $n(7) orient down
+$ns simplex-link-op $n(4) $n(8) orient down
+$ns simplex-link-op $n(9) $n(5) orient up
+$ns simplex-link-op $n(6) $n(10) orient down
+$ns simplex-link-op $n(7) $n(8) orient right
+$ns simplex-link-op $n(10) $n(9) orient left
+
+$ns color 1 red
+$ns color 2 blue
+$ns color 3 green
+
+#Set tcp agent
+set tcp [new Agent/TCP]
+$ns attach-agent $n(1) $tcp
+set sink [new Agent/TCPSink]
+$ns attach-agent $n(10) $sink
+$ns connect $tcp $sink
+$tcp set fid_ 1
+$tcp set packetsize_ 1024
+$tcp set random_ true
+$tcp set rate_ 0.02Mb
+
+set ftp [new Application/FTP]
+$ftp attach-agent $tcp
+$ftp set type_ FTP
+
+
+
+
+
+set udp0 [new Agent/UDP]
+$ns attach-agent $n(2) $udp0
+set null [new Agent/Null]
+$ns attach-agent $n(7) $null
+$ns connect $udp0 $null
+$udp0 set fid_ 2
+
+set cbr0 [new Application/Traffic/CBR]
+$cbr0 attach-agent $udp0
+$cbr0 set packetsize_ 512
+$cbr0 set rate_ 0.01Mb
+$cbr0 set random_ false
+
+
+
+
+
+set udp1 [new Agent/UDP]
+$ns attach-agent $n(3) $udp1
+set null [new Agent/Null]
+$ns attach-agent $n(6) $null
+$ns connect $udp1 $null
+$udp1 set fid_ 3
+
+set cbr1 [new Application/Traffic/CBR]
+$cbr1 attach-agent $udp1
+$cbr1 set packetsize_ 512
+$cbr1 set rate_ 0.01Mb
+$cbr1 set random_ true
+
+
+
+
+
+$ns at 0.0 "$cbr0 start"
+$ns at 0.0 "$cbr1 start"
+$ns at 0.0 "$ftp start"
+$ns rtmodel-at 5.0 down $n(4) $n(5)
+$ns rtmodel-at 55.0 up $n(4) $n(5)
+$ns rtmodel-at 20.0 down $n(8) $n(9)
+$ns rtmodel-at 40.0 up $n(8) $n(9)
+$ns at 100.0 "finish"
+$ns run
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
